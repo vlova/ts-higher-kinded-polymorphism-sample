@@ -1,3 +1,4 @@
+if you prefer read this in Russian, you can read ["Высшие дженерики в typescript"](https://viktorlove.medium.com/typescript-higher-kinded-polymorphism-43a0eb20d43c)
 # What this about
 
 You are familiar with generics.
@@ -8,7 +9,12 @@ function map<TElement>(
     collection: Array<TElement>,
     selector: (element: TElement) => TNewElement
 ) : Array<TNewElement> {
-    return collection.map(selector);
+    const outputCollection = [];
+    for (const item of collection) {
+        outputCollection.push(selector(item));
+    }
+
+    return outputCollection;
 }
 ```
 
@@ -102,7 +108,7 @@ export const ArrayDescription: CollectionDescription<ArrayTypeID> = {
 
     add: (collection, value) => collection.push(value),
 
-    getIterator: collection => collection.[Symbol.iterator]
+    getIterator: collection => collection.[Symbol.iterator]()
 };
 ```
 
@@ -144,7 +150,7 @@ export interface TypeIdToProbableCollectionTypeMap<TElement> { }
 We will augment this type in other files:
 ```typescript
 // array.ts
-declare module '.collections.hkt' {  // or (`package-name/collections.hkt`)
+declare module '.collections.hkt' { // or (`package-name/collections.hkt`)
     interface TypeIdToProbableCollectionTypeMap<A> {
         readonly [ArrayTypeID]: Array<A>;
     }
@@ -156,6 +162,7 @@ Now we gonna build a new type-map. For each type defined in type-map `TypeIdToPr
    2. If not, replace it with the error message
 
 ```typescript
+// collections.hkt.ts
 type TypeIdToCollectionTypeMap<TElement> = {
     [TypeId in keyof TypeIdToProbableCollectionTypeMap<TElement>]
     : ErrorIfNotFulfillsConstraint<
@@ -169,6 +176,7 @@ type TypeIdToCollectionTypeMap<TElement> = {
 And ofc we need to provide specialized version of `TypeIds` and `MakeType`:
 
 ```typescript
+// collections.hkt.ts
 export type CollectionTypeIds = keyof TypeIdToCollectionTypeMap<any>
 
 export type MakeCollectionType<TypeId extends CollectionTypeIds, TElement>
@@ -183,4 +191,4 @@ Because `Set<T extends any>` and `WeakSet<T extends object>`
 
 # Source of idea
 
-I found implementation here: [fp-ts / guides / write type class instance](https://gcanti.github.io/fp-ts/guides/HKT.html). They refer this idea to paper [Lightweight higher-kinded polymorphism (pdf)](https://www.cl.cam.ac.uk/~jdy22/papers/lightweight-higher-kinded-polymorphism.pdf) which shows how to build this in OCaml
+I found implementation here: ["fp-ts / guides / write type class instance"](https://gcanti.github.io/fp-ts/guides/HKT.html). They refer this idea to paper ["Lightweight higher-kinded polymorphism (pdf)"](https://www.cl.cam.ac.uk/~jdy22/papers/lightweight-higher-kinded-polymorphism.pdf) which shows how to build this in OCaml
